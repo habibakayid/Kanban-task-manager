@@ -9,7 +9,6 @@ export default class TaskStore {
     this.tasks = this.load();
   }
 
-  
   private load(): Task[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -44,9 +43,10 @@ export default class TaskStore {
     title: string,
     description: string,
     priority: TaskPriority,
+    dueDate: string | null = null,
     status: TaskStatus = "todo"
   ): Task {
-    const task = new Task(title, description, priority, status);
+    const task = new Task(title, description, priority, dueDate, status);
     this.tasks.push(task);
     this.save();
     return task;
@@ -55,7 +55,7 @@ export default class TaskStore {
   
   update(
     id: string,
-    updates: Partial<Pick<Task, "title" | "description" | "priority" | "status">>
+    updates: Partial<Pick<Task, "title" | "description" | "priority" | "status" | "dueDate">>
   ): Task | null {
     const task = this.findById(id);
     if (!task) return null;
@@ -65,12 +65,12 @@ export default class TaskStore {
     return task;
   }
 
- 
+  
   moveTask(id: string, newStatus: TaskStatus): Task | null {
     return this.update(id, { status: newStatus });
   }
 
-
+  
   delete(id: string): boolean {
     const initialLength = this.tasks.length;
     this.tasks = this.tasks.filter((task) => task.id !== id);
