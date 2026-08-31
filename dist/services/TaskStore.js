@@ -29,8 +29,8 @@ export default class TaskStore {
     findById(id) {
         return this.tasks.find((task) => task.id === id);
     }
-    add(title, description, priority, status = "todo") {
-        const task = new Task(title, description, priority, status);
+    add(title, description, priority, dueDate = null, status = "todo") {
+        const task = new Task(title, description, priority, dueDate, status);
         this.tasks.push(task);
         this.save();
         return task;

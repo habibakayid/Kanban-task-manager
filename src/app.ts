@@ -14,6 +14,9 @@ class KanbanApp {
   private descInput: HTMLTextAreaElement;
   private priorityInput: HTMLSelectElement;
   private statusInput: HTMLSelectElement;
+  private dueDateInput: HTMLInputElement;
+  private descCounter: HTMLElement;
+  private submitBtn: HTMLButtonElement;
 
   private editingTaskId: string | null = null;
   private draggedTaskId: string | null = null;
@@ -40,6 +43,9 @@ class KanbanApp {
     this.descInput = document.getElementById("taskDescription") as HTMLTextAreaElement;
     this.priorityInput = document.getElementById("taskPriority") as HTMLSelectElement;
     this.statusInput = document.getElementById("taskStatus") as HTMLSelectElement;
+    this.dueDateInput = document.getElementById("taskDueDate") as HTMLInputElement;
+    this.descCounter = document.getElementById("descCounter") as HTMLElement;
+    this.submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
 
     this.bindEvents();
     this.render();
@@ -68,7 +74,8 @@ class KanbanApp {
 
     this.form.addEventListener("submit", (e) => this.handleSubmit(e));
 
-    
+    this.descInput.addEventListener("input", () => this.updateCharCounter());
+
     (Object.keys(this.columns) as TaskStatus[]).forEach((status) => {
       const columnEl = this.columns[status];
 
@@ -100,16 +107,20 @@ class KanbanApp {
     if (task) {
       this.editingTaskId = task.id;
       this.modalTitle.textContent = "Edit Task";
+      this.submitBtn.textContent = "Save Changes";
       this.titleInput.value = task.title;
       this.descInput.value = task.description;
       this.priorityInput.value = task.priority;
       this.statusInput.value = task.status;
+      this.dueDateInput.value = task.dueDate ?? "";
     } else {
       this.editingTaskId = null;
       this.modalTitle.textContent = "Add New Task";
+      this.submitBtn.textContent = "Add Task";
       this.statusInput.value = "todo";
     }
 
+    this.updateCharCounter();
     this.modal.classList.add("open");
     this.titleInput.focus();
   }
@@ -119,6 +130,13 @@ class KanbanApp {
     this.editingTaskId = null;
   }
 
+  private updateCharCounter(): void {
+    const max = 500;
+    const len = this.descInput.value.length;
+    this.descCounter.textContent = `${len}/${max}`;
+    this.descCounter.classList.toggle("limit-near", len > max * 0.9);
+  }
+
   private handleSubmit(e: Event): void {
     e.preventDefault();
 
@@ -126,13 +144,14 @@ class KanbanApp {
     const description = this.descInput.value.trim();
     const priority = this.priorityInput.value as TaskPriority;
     const status = this.statusInput.value as TaskStatus;
+    const dueDate = this.dueDateInput.value || null;
 
     if (!title) return;
 
     if (this.editingTaskId) {
-      this.store.update(this.editingTaskId, { title, description, priority, status });
+      this.store.update(this.editingTaskId, { title, description, priority, status, dueDate });
     } else {
-      this.store.add(title, description, priority, status);
+      this.store.add(title, description, priority, dueDate, status);
     }
 
     this.closeModal();
@@ -146,7 +165,6 @@ class KanbanApp {
     }
   }
 
- 
   private createTaskCard(task: Task): HTMLElement {
     const card = document.createElement("div");
     card.className = "task-card";
@@ -181,6 +199,14 @@ class KanbanApp {
       <div class="task-time">
         <i class="fa-regular fa-clock"></i> ${this.formatRelativeTime(task.createdAt)}
       </div>
+
+      ${
+        task.dueDate
+          ? `<div class="task-due-date${this.isOverdue(task.dueDate, task.status) ? " overdue" : ""}">
+               <i class="fa-regular fa-calendar"></i> Due ${this.formatDueDate(task.dueDate)}
+             </div>`
+          : ""
+      }
 
       <div class="task-card-divider"></div>
 
@@ -223,7 +249,6 @@ class KanbanApp {
     return card;
   }
 
- 
   private getTaskNumber(id: string): string {
     const allTasks = this.store.getAll();
     const index = allTasks.findIndex((t) => t.id === id);
@@ -257,6 +282,17 @@ class KanbanApp {
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  private formatDueDate(dateStr: string): string {
+    const date = new Date(`${dateStr}T00:00:00`);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  private isOverdue(dateStr: string, status: TaskStatus): boolean {
+    if (status === "done") return false;
+    const due = new Date(`${dateStr}T23:59:59`);
+    return due.getTime() < Date.now();
   }
 
   private formatRelativeTime(iso: string): string {

@@ -330,6 +330,19 @@ body {
   margin-bottom: 14px;
 }
 
+.task-due-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.task-due-date.overdue {
+  color: var(--priority-high);
+}
+
 .task-card-divider {
   border-top: 1px solid var(--border-color);
   margin-bottom: 14px;
@@ -461,6 +474,22 @@ body {
   gap: 12px;
 }
 
+.required-mark {
+  color: var(--accent-pink);
+}
+
+.char-counter {
+  display: block;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.char-counter.limit-near {
+  color: var(--priority-high);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -488,9 +517,6 @@ body {
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
 }
-
-
-
 
 @media (max-width: 900px) {
   .board {
